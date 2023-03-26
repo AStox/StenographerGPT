@@ -87,31 +87,35 @@ def merge_audio_files(file1, file2, output_file):
     combined = audio1.overlay(audio2)
     combined.export(output_file, format='wav')
 
-def find_device_index(device_label):
+def find_device_index(device_label, direction):
+    if direction not in ['input', 'output']:
+        raise ValueError("Invalid direction. It must be 'input' or 'output'.")
+
     devices = sd.query_devices()
     for index, device in enumerate(devices):
         if device['name'] == device_label:
-            return index
+            if (direction == 'input' and device['max_input_channels'] > 0) or (direction == 'output' and device['max_output_channels'] > 0):
+                return index
     return -1
 
 
 # print the available devices
 devices = sd.query_devices()
 for index, device in enumerate(devices):
-    # print index name and max input channels
-    print(f"Device Index: {index}, Device Name: {device['name']}, Max Input Channels: {device['max_input_channels']}")
+    # print index name and max input channels and max output channels
+    print(f"Device Index: {index}, Device Name: {device['name']}, Max Input Channels: {device['max_input_channels']}," +
+          f" Max Output Channels: {device['max_output_channels']}")
 
 
 # Find the device indices
 # ternary operator to handle the case where the AirPods Pro are not connected
-print(find_device_index('Stox’s AirPods Pro'))
-MIC_DEVICE_INDEX = find_device_index('Stox’s AirPods Pro') if find_device_index('Stox’s AirPods Pro') >= 0 else find_device_index('MacBook Pro Microphone')
-SYSTEM_AUDIO_DEVICE_INDEX = find_device_index('BlackHole 2ch')
-SPEAKER_DEVICE_INDEX = find_device_index('MacBook Pro Speakers')
+MIC_DEVICE_INDEX = find_device_index('Stox’s AirPods Pro', 'input') if find_device_index('Stox’s AirPods Pro', 'input') >= 0 else find_device_index('MacBook Pro Microphone', 'input')
+SYSTEM_AUDIO_DEVICE_INDEX = find_device_index('BlackHole 2ch', 'output')
+# SPEAKER_DEVICE_INDEX = find_device_index('Stox’s AirPods Pro', 'output') if find_device_index('Stox’s AirPods Pro', 'output') >= 0 else find_device_index('MacBook Pro Speakers', 'output')
 
 print('MIC_DEVICE_INDEX:', MIC_DEVICE_INDEX)
 print('SYSTEM_AUDIO_DEVICE_INDEX:', SYSTEM_AUDIO_DEVICE_INDEX)
-print('SPEAKER_DEVICE_INDEX:', SPEAKER_DEVICE_INDEX)
+# print('SPEAKER_DEVICE_INDEX:', SPEAKER_DEVICE_INDEX)
 
 # Start the non-blocking recording for microphone and system audio
 mic_thread = record_audio_non_blocking('mic_output.wav', MIC_DEVICE_INDEX, channels=1)
