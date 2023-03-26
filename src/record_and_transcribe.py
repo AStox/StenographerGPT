@@ -6,6 +6,8 @@ import sounddevice as sd
 import threading
 import keyboard
 import soundfile as sf
+import numpy as np
+from scipy.io import wavfile
 from pydub import AudioSegment
 from queue import Queue
 from dotenv import load_dotenv
@@ -41,7 +43,7 @@ def summarize_text(text):
 
     data = {
         'model': 'text-davinci-003',
-        'prompt': f'Summarize the following text:\n{text}',
+        'prompt': f'Summarize the following transcript:\n{text}',
         'max_tokens': 50,
         'temperature': 0.5,
     }
@@ -81,11 +83,54 @@ def callback(file, indata, frames, time, status):
         print(status, file=sys.stderr)
     file.write(indata)
 
+def file_exists_and_not_empty(file_path):
+    return os.path.exists(file_path) and os.path.getsize(file_path) > 0
+
+def print_audio_duration(file_path):
+    with sf.SoundFile(file_path) as audio_file:
+        duration = len(audio_file) / audio_file.samplerate
+        print(f"{file_path} duration: {duration} seconds")
+
+
+
+
 def merge_audio_files(file1, file2, output_file):
-    audio1 = AudioSegment.from_wav(file1)
-    audio2 = AudioSegment.from_wav(file2)
-    combined = audio1.overlay(audio2)
-    combined.export(output_file, format='wav')
+    # Read the input files
+    audio1_data, samplerate1 = sf.read(file1)
+    audio2_data, samplerate2 = sf.read(file2)
+
+    # Ensure both audio arrays are 2D (channels x samples)
+    if audio1_data.ndim == 1:
+        audio1_data = audio1_data[:, np.newaxis]
+    if audio2_data.ndim == 1:
+        audio2_data = audio2_data[:, np.newaxis]
+
+    # Upmix the audio files to the same number of channels
+    max_channels = max(audio1_data.shape[1], audio2_data.shape[1])
+    if audio1_data.shape[1] < max_channels:
+        audio1_data = np.tile(audio1_data, (1, max_channels // audio1_data.shape[1]))
+    if audio2_data.shape[1] < max_channels:
+        audio2_data = np.tile(audio2_data, (1, max_channels // audio2_data.shape[1]))
+
+    # Check if the input files have the same sample rate
+    if samplerate1 != samplerate2:
+        raise ValueError("Input files must have the same sample rate")
+
+    # Make sure the input files have the same length
+    if audio1_data.shape[0] < audio2_data.shape[0]:
+        pad = np.zeros((audio2_data.shape[0] - audio1_data.shape[0], audio1_data.shape[1]), dtype=audio1_data.dtype)
+        audio1_data = np.vstack((audio1_data, pad))
+    else:
+        pad = np.zeros((audio1_data.shape[0] - audio2_data.shape[0], audio2_data.shape[1]), dtype=audio2_data.dtype)
+        audio2_data = np.vstack((audio2_data, pad))
+
+    # Merge the audio data
+    merged_data = audio1_data + audio2_data
+
+    # Write the output file
+    sf.write(output_file, merged_data, samplerate1)
+
+
 
 def find_device_index(device_label, direction):
     if direction not in ['input', 'output']:
@@ -111,11 +156,9 @@ for index, device in enumerate(devices):
 # ternary operator to handle the case where the AirPods Pro are not connected
 MIC_DEVICE_INDEX = find_device_index('Stox’s AirPods Pro', 'input') if find_device_index('Stox’s AirPods Pro', 'input') >= 0 else find_device_index('MacBook Pro Microphone', 'input')
 SYSTEM_AUDIO_DEVICE_INDEX = find_device_index('BlackHole 2ch', 'output')
-# SPEAKER_DEVICE_INDEX = find_device_index('Stox’s AirPods Pro', 'output') if find_device_index('Stox’s AirPods Pro', 'output') >= 0 else find_device_index('MacBook Pro Speakers', 'output')
 
 print('MIC_DEVICE_INDEX:', MIC_DEVICE_INDEX)
 print('SYSTEM_AUDIO_DEVICE_INDEX:', SYSTEM_AUDIO_DEVICE_INDEX)
-# print('SPEAKER_DEVICE_INDEX:', SPEAKER_DEVICE_INDEX)
 
 # Start the non-blocking recording for microphone and system audio
 mic_thread = record_audio_non_blocking('mic_output.wav', MIC_DEVICE_INDEX, channels=1)
