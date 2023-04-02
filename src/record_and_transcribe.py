@@ -11,10 +11,10 @@ from scipy.io import wavfile
 from pydub import AudioSegment
 from queue import Queue
 from dotenv import load_dotenv
-from create_mod import create_multi_output_device
+# from create_mod import create_multi_output_device
 import os
 
-create_multi_output_device()
+# create_multi_output_device()
 
 load_dotenv()
 API_KEY = os.getenv("OPENAI_API_KEY")
@@ -212,8 +212,8 @@ def process_audio(mic_output, system_output, merged_output):
     summary = summarize_text(transcription)
     print('Summary:', summary)
 
-start_recording('mic_output.wav', MIC_DEVICE_INDEX, 1)
-start_recording('system_output.wav', SYSTEM_AUDIO_DEVICE_INDEX, 2)
-keyboard.wait('s')
-stop_recording()
-process_audio('mic_output.wav', 'system_output.wav', 'merged_output.wav')
+# start_recording('mic_output.wav', MIC_DEVICE_INDEX, 1)
+# start_recording('system_output.wav', SYSTEM_AUDIO_DEVICE_INDEX, 2)
+# keyboard.wait('s')
+# stop_recording()
+# process_audio('mic_output.wav', 'system_output.wav', 'merged_output.wav')

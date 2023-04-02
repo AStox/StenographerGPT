@@ -12,6 +12,10 @@ numpy = "*"
 soundfile = "*"
 sounddevice = "*"
 pyobjc-framework-coreaudio = "*"
+requests = "*"
+keyboard = "*"
+pydub = "*"
+py2app = "*"
 
 [requires]
 python_version = "3.9"

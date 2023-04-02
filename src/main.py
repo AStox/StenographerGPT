@@ -1,5 +1,5 @@
-# main.py
 import rumps
+import subprocess
 from record_and_transcribe import start_recording, stop_recording
 
 class RecorderApp(rumps.App):
@@ -12,6 +12,7 @@ class RecorderApp(rumps.App):
 
     @rumps.clicked("Start Recording")
     def start(self, _):
+        subprocess.run(["./MultiOutputDeviceManager", "create"])
         self.start_button.set_callback(None)
         self.stop_button.set_callback(self.stop)
         start_recording()
