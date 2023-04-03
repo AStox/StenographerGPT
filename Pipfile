@@ -3,9 +3,12 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 name = "pypi"
 
+[scripts]
+start = python src/main.py
+compile = swiftc -o MultiOutputDeviceManager src/MultiOutputDeviceManager.swift
+
 [packages]
 pyobjc = "*"
-rumps = "*"
 pyaudio = "*"
 scipy = "*"
 numpy = "*"
@@ -16,6 +19,7 @@ requests = "*"
 keyboard = "*"
 pydub = "*"
 py2app = "*"
+rumps = "*"
 
 [requires]
 python_version = "3.9"

@@ -61,7 +61,11 @@ def summarize_text(text):
 
     return response.json()['choices'][0]['text'].strip()
 
-def start_recording(outfile, device_index, channels=1):
+def start_recording():
+    _start_recording('mic_output.wav', MIC_DEVICE_INDEX, 1)
+    _start_recording('system_output.wav', SYSTEM_AUDIO_DEVICE_INDEX, 2)
+
+def _start_recording(outfile, device_index, channels=1):
     global is_recording
     is_recording = True
     record_thread = threading.Thread(target=record_audio_non_blocking, args=(outfile, device_index, channels))
@@ -71,6 +75,7 @@ def stop_recording():
     global is_recording
     is_recording = False
     stop_event.set()
+    process_audio('mic_output.wav', 'system_output.wav', 'merged_output.wav')
 
 def record_audio_non_blocking(outfile, device_index, channels):
     with sf.SoundFile(outfile, mode='w', samplerate=48000, channels=channels) as file:

@@ -1,6 +1,7 @@
 import rumps
 import subprocess
 from record_and_transcribe import start_recording, stop_recording
+from audio_device_manager import switch_to_blackhole, switch_to_previous_device
 
 class RecorderApp(rumps.App):
     def __init__(self):
@@ -12,13 +13,14 @@ class RecorderApp(rumps.App):
 
     @rumps.clicked("Start Recording")
     def start(self, _):
-        subprocess.run(["./MultiOutputDeviceManager", "create"])
+        # switch_to_blackhole()
         self.start_button.set_callback(None)
         self.stop_button.set_callback(self.stop)
         start_recording()
 
     @rumps.clicked("Stop Recording")
     def stop(self, _):
+        # switch_to_previous_device()
         self.start_button.set_callback(self.start)
         self.stop_button.set_callback(None)
         stop_recording()
