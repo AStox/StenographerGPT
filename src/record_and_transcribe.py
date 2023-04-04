@@ -24,20 +24,38 @@ recording = True
 stop_event = threading.Event()
 
 
-def transcribe_audio(audio_file):
-    headers = {
-        'Authorization': f'Bearer {API_KEY}',
-        # 'Content-Type': 'multipart/form-data',
-    }
-    with open(audio_file, 'rb') as f:
-        audio_data = f.read()
-        response = requests.post(
-            'https://api.openai.com/v1/audio/transcriptions',
-            headers=headers,
-            data={'model': 'whisper-1'},
-            files={'file': ('output.wav', audio_data, 'audio/wav')}
-        )
-        return response.json()['text']
+def transcribe_audio(audio_file, chunk_duration=60):
+    audio = AudioSegment.from_wav(audio_file)
+    audio_duration = audio.duration_seconds
+    chunk_size = chunk_duration * 1000  # chunk_duration in milliseconds
+    transcriptions = []
+
+    for i in range(0, int(audio_duration * 1000), chunk_size):
+        chunk = audio[i:i + chunk_size]
+        chunk_file = 'temp_chunk.wav'
+        chunk.export(chunk_file, format='wav')
+
+        headers = {
+            'Authorization': f'Bearer {API_KEY}',
+        }
+
+        with open(chunk_file, 'rb') as f:
+            audio_data = f.read()
+            response = requests.post(
+                'https://api.openai.com/v1/audio/transcriptions',
+                headers=headers,
+                data={'model': 'whisper-1'},
+                files={'file': ('temp_chunk.wav', audio_data, 'audio/wav')}
+            )
+            print(response.json())
+            transcription = response.json()['text']
+            transcriptions.append(transcription)
+
+    full_transcription = ' '.join(transcriptions)
+    return full_transcription
+
+
+import time
 
 def summarize_text(text):
     headers = {
@@ -45,20 +63,39 @@ def summarize_text(text):
         'Content-Type': 'application/json',
     }
 
-    data = {
-        'model': 'text-davinci-003',
-        'prompt': f'Summarize the following transcript in english:\n{text}',
-        'max_tokens': 2048,
-        # 'temperature': 0.5,
-    }
+    tokens = text.split()
+    chunks = []
 
-    response = requests.post(
-        'https://api.openai.com/v1/completions',
-        headers=headers,
-        json=data
-    )
+    while tokens:
+        chunk_tokens = []
+        while tokens and len(chunk_tokens) + len(tokens[0]) + 1 < 2048:
+            token = tokens.pop(0)
+            chunk_tokens.append(token)
+        chunks.append(' '.join(chunk_tokens))
 
-    return response.json()['choices'][0]['text'].strip()
+    summaries = []
+
+    for chunk in chunks:
+        messages = [
+            {'role': 'system', 'content': 'You are an AI language model trained to summarize text. Please provide a detailed summary of the following transcription:'},
+            {'role': 'user', 'content': chunk}
+        ]
+
+        data = {
+            'model': 'gpt-3.5-turbo',
+            'messages': messages
+        }
+
+        response = requests.post('https://api.openai.com/v1/chat/completions', headers=headers, json=data)
+        print(response.json())
+        summary = response.json()['choices'][0]['message']['content']
+        summaries.append(summary)
+
+        time.sleep(1)  # Pause between API requests to avoid rate limits
+
+    combined_summary = ' '.join(summaries)
+    return combined_summary
+
 
 def start_recording(output_directory):
     stop_event.clear()
@@ -188,6 +225,16 @@ def process_audio(input_directory, output_directory):
     # Summarize the transcription
     summary_file = os.path.join(output_directory, "summary.txt")
     summary = summarize_text(transcription)
+    with open(summary_file, "w") as f:
+        f.write(summary)
+    print('Summary:', summary)
+
+# stop_recording('archive/office')
+output_directory = 'archive/office'
+with open('archive/office/transcript.txt', 'r') as file:
+    transcription_text = file.read()
+    summary_file = os.path.join(output_directory, "summary.txt")
+    summary = summarize_text(transcription_text)
     with open(summary_file, "w") as f:
         f.write(summary)
     print('Summary:', summary)
