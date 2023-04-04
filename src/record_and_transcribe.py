@@ -37,7 +37,6 @@ def transcribe_audio(audio_file):
             data={'model': 'whisper-1'},
             files={'file': ('output.wav', audio_data, 'audio/wav')}
         )
-        print(response.json())
         return response.json()['text']
 
 def summarize_text(text):
@@ -61,9 +60,10 @@ def summarize_text(text):
 
     return response.json()['choices'][0]['text'].strip()
 
-def start_recording():
-    _start_recording('mic_output.wav', MIC_DEVICE_INDEX, 1)
-    _start_recording('system_output.wav', SYSTEM_AUDIO_DEVICE_INDEX, 2)
+def start_recording(output_directory):
+    stop_event.clear()
+    _start_recording(os.path.join(output_directory, "mic_output.wav"), MIC_DEVICE_INDEX, 1)
+    _start_recording(os.path.join(output_directory, "system_output.wav"), SYSTEM_AUDIO_DEVICE_INDEX, 2)
 
 def _start_recording(outfile, device_index, channels=1):
     global is_recording
@@ -71,36 +71,18 @@ def _start_recording(outfile, device_index, channels=1):
     record_thread = threading.Thread(target=record_audio_non_blocking, args=(outfile, device_index, channels))
     record_thread.start()
 
-def stop_recording():
+def stop_recording(output_directory):
     global is_recording
     is_recording = False
     stop_event.set()
-    process_audio('mic_output.wav', 'system_output.wav', 'merged_output.wav')
+    process_audio(output_directory, output_directory)
 
 def record_audio_non_blocking(outfile, device_index, channels):
     with sf.SoundFile(outfile, mode='w', samplerate=48000, channels=channels) as file:
         with sd.InputStream(callback=functools.partial(callback, file), channels=channels, samplerate=48000, device=device_index):
-            print('Recording started.')
+            # print('Recording started.')
             stop_event.wait()
-            print('Recording stopped.')
-
-# def record_audio_non_blocking(outfile, device_index, seconds=None, channels=1):
-#     def record(outfile, device_index, seconds, channels):
-#         with sf.SoundFile(outfile, mode='w', samplerate=48000, channels=channels) as file:
-#             with sd.InputStream(callback=functools.partial(callback, file), channels=channels, samplerate=48000, device=device_index):
-#                 print('Recording started.')
-#                 while True:
-#                     sd.sleep(500)
-#                     if keyboard.is_pressed('s'):
-#                         break
-#                     if seconds is not None:
-#                         sd.sleep(seconds * 1000)
-#                         break
-#         print('Recording stopped.')
-
-#     record_thread = threading.Thread(target=record, args=(outfile, device_index, seconds, channels))
-#     record_thread.start()
-#     return record_thread
+            # print('Recording stopped.')
 
 def stop_audio_recording():
     global recording
@@ -183,42 +165,29 @@ def find_device_index(device_label, direction):
 MIC_DEVICE_INDEX = find_device_index('Stox’s AirPods Pro', 'input') if find_device_index('Stox’s AirPods Pro', 'input') >= 0 else find_device_index('MacBook Pro Microphone', 'input')
 SYSTEM_AUDIO_DEVICE_INDEX = find_device_index('BlackHole 2ch', 'output')
 
-print('MIC_DEVICE_INDEX:', MIC_DEVICE_INDEX)
-print('SYSTEM_AUDIO_DEVICE_INDEX:', SYSTEM_AUDIO_DEVICE_INDEX)
+# print('MIC_DEVICE_INDEX:', MIC_DEVICE_INDEX)
+# print('SYSTEM_AUDIO_DEVICE_INDEX:', SYSTEM_AUDIO_DEVICE_INDEX)
 
-# # Start the non-blocking recording for microphone and system audio
-# mic_thread = record_audio_non_blocking('mic_output.wav', MIC_DEVICE_INDEX, channels=1)
-# system_audio_thread = record_audio_non_blocking('system_output.wav', SYSTEM_AUDIO_DEVICE_INDEX, channels=2)
 
-# # Wait for the 's' key to stop the recording
-# keyboard.wait('s')
-# stop_audio_recording()
 
-# # Merge the recorded audio files
-# merge_audio_files('mic_output.wav', 'system_output.wav', 'merged_output.wav')
-
-# # Transcribe the audio
-# transcription = transcribe_audio('merged_output.wav')
-# print('Transcription:', transcription)
-
-# # Summarize the transcription
-# summary = summarize_text(transcription)
-# print('Summary:', summary)
-
-def process_audio(mic_output, system_output, merged_output):
+def process_audio(input_directory, output_directory):
+    mic_output = os.path.join(input_directory, "mic_output.wav")
+    system_output = os.path.join(input_directory, "system_output.wav")
+    merged_output = os.path.join(output_directory, "merged_output.wav")
     # Merge the recorded audio files
     merge_audio_files(mic_output, system_output, merged_output)
 
     # Transcribe the audio
     transcription = transcribe_audio(merged_output)
-    print('Transcription:', transcription)
+    print(transcription);
+    transcript_file = os.path.join(output_directory, "transcript.txt")
+    with open(transcript_file, "w") as f:
+        f.write(transcription)
+
 
     # Summarize the transcription
+    summary_file = os.path.join(output_directory, "summary.txt")
     summary = summarize_text(transcription)
+    with open(summary_file, "w") as f:
+        f.write(summary)
     print('Summary:', summary)
-
-# start_recording('mic_output.wav', MIC_DEVICE_INDEX, 1)
-# start_recording('system_output.wav', SYSTEM_AUDIO_DEVICE_INDEX, 2)
-# keyboard.wait('s')
-# stop_recording()
-# process_audio('mic_output.wav', 'system_output.wav', 'merged_output.wav')

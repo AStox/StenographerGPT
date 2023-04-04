@@ -4,8 +4,8 @@ AudioTypes = {
     'speakers': 'MacBook Pro Speakers',
     'headphones': 'Stox’s AirPods Pro',
     'blackhole': 'BlackHole 2ch',
-    'speakers_BH': 'Speakers + Blackhole',
-    'headphones_BH': 'AirPods + Blackhole',
+    'speakers_BH': 'SpeakersBH',
+    'headphones_BH': 'AirpodsBH',
 }
 
 previous_audio_device = None
@@ -23,6 +23,7 @@ def set_audio_output_device(device_name):
     subprocess.check_call(['SwitchAudioSource', '-s', device_name])
 
 def switch_to_blackhole():
+    global previous_audio_device
     previous_audio_device = get_current_audio_device()
     if (previous_audio_device == AudioTypes['speakers']):
         set_audio_output_device(AudioTypes['speakers_BH'])
@@ -30,7 +31,10 @@ def switch_to_blackhole():
         set_audio_output_device(AudioTypes['headphones_BH'])
 
 def switch_to_previous_device():
+    global previous_audio_device
     if (previous_audio_device == AudioTypes['speakers']):
         set_audio_output_device(AudioTypes['speakers'])
     elif (previous_audio_device == AudioTypes['headphones']):
+        # When airpods are disconnected, the laptop will automatically switch to the last connected device, which in this case would be AirpodsBH. So we need to switch to speakers first.
+        set_audio_output_device(AudioTypes['speakers'])
         set_audio_output_device(AudioTypes['headphones'])
