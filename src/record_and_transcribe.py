@@ -112,7 +112,7 @@ def stop_recording(output_directory):
     global is_recording
     is_recording = False
     stop_event.set()
-    process_audio(output_directory, output_directory)
+    # process_audio(output_directory, output_directory)
 
 def record_audio_non_blocking(outfile, device_index, channels):
     with sf.SoundFile(outfile, mode='w', samplerate=48000, channels=channels) as file:
@@ -230,11 +230,11 @@ def process_audio(input_directory, output_directory):
     print('Summary:', summary)
 
 # stop_recording('archive/office')
-output_directory = 'archive/office'
-with open('archive/office/transcript.txt', 'r') as file:
-    transcription_text = file.read()
-    summary_file = os.path.join(output_directory, "summary.txt")
-    summary = summarize_text(transcription_text)
-    with open(summary_file, "w") as f:
-        f.write(summary)
-    print('Summary:', summary)
+# output_directory = 'archive/office'
+# with open('archive/office/transcript.txt', 'r') as file:
+#     transcription_text = file.read()
+#     summary_file = os.path.join(output_directory, "summary.txt")
+#     summary = summarize_text(transcription_text)
+#     with open(summary_file, "w") as f:
+#         f.write(summary)
+#     print('Summary:', summary)
