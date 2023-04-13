@@ -2,3 +2,8 @@
 __pycache__/
 .vscode/
 archive/
+.eggs/
+*.egg-info/
+dist/
+build/
+.DS_Store
