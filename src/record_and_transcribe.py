@@ -1,20 +1,13 @@
 import sys
 import requests
-import json
 import functools
 import sounddevice as sd
 import threading
-import keyboard
 import soundfile as sf
 import numpy as np
-from scipy.io import wavfile
 from pydub import AudioSegment
-from queue import Queue
 from dotenv import load_dotenv
-# from create_mod import create_multi_output_device
 import os
-
-# create_multi_output_device()
 
 load_dotenv()
 API_KEY = os.getenv("OPENAI_API_KEY")
@@ -51,6 +44,7 @@ def transcribe_audio(audio_file, chunk_duration=60):
             transcription = response.json()['text']
             transcriptions.append(transcription)
 
+    os.remove('temp_chunk.wav')
     full_transcription = ' '.join(transcriptions)
     return full_transcription
 

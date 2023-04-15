@@ -3,10 +3,6 @@ url = "https://pypi.org/simple"
 verify_ssl = true
 name = "pypi"
 
-[scripts]
-start = python src/main.py
-compile = swiftc -o MultiOutputDeviceManager src/MultiOutputDeviceManager.swift
-
 [packages]
 pyobjc = "*"
 pyaudio = "*"
