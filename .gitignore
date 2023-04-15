@@ -7,3 +7,4 @@ archive/
 dist/
 build/
 .DS_Store
+*.wav
