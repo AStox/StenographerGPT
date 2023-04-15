@@ -44,7 +44,8 @@ def transcribe_audio(audio_file, chunk_duration=60):
             transcription = response.json()['text']
             transcriptions.append(transcription)
 
-    os.remove('temp_chunk.wav')
+    if os.path.exists('temp_chunk.wav'):
+        os.remove('temp_chunk.wav')
     full_transcription = ' '.join(transcriptions)
     return full_transcription
 
