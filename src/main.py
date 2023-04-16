@@ -31,13 +31,15 @@ class Stenographer(object):
         curses.init_pair(1, -1, curses.COLOR_BLACK)
         stdscr.bkgd(curses.color_pair(1))
 
-        curses.init_color(1, 0, 1000, 0)  # set bright green color
-        curses.init_pair(2, 1, -1)
+        curses.init_color(1, 0, 0, 0)  # BLACK
+        curses.init_color(2, 0, 1000, 0)  # GREEN
+        curses.init_pair(2, 2, 1)
 
         option = 0
         options = ["Start Recording", "Stop Recording"]
 
         art_win = curses.newwin(9, curses.COLS, 0, 0)
+        art_win.bkgd(curses.color_pair(1))
         art_win.attron(curses.color_pair(2))
         stdscr.attron(curses.color_pair(2))
 
