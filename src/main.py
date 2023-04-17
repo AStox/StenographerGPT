@@ -71,14 +71,14 @@ class Stenographer(object):
 
         # Menu logic
         option = 0
-        options = ["Start New Recording", "Stop Recording"]
+        options = ["Start New Recording"]
 
         while True:
             title_window.clear()
             ASCII_line_length = 143
             offset = (curses.COLS - ASCII_line_length) // 2
-            title_window.addstr(0, offset,'''                                                                                                                 .----.''')
-            title_window.addstr(1, offset,'''.d88888b    dP                                                                  dP                              /##_##_|''')
+            title_window.addstr(0, offset,'''                                                                                                                 .~~~~.''')
+            title_window.addstr(1, offset,'''.d88888b    dP                                                                  dP                              {  _  _|''')
             title_window.addstr(2, offset,'''88.    "'   88                                                                  88                              lv(◕ |◕)''')
             title_window.addstr(3, offset,'''`Y88888b. d8888P .d8888b. 88d888b. .d8888b. .d8888b. 88d888b. .d8888b. 88d888b. 88d888b. .d8888b. 88d888b.       l  ‿‿ j''')
             title_window.addstr(4, offset,'''      `8b   88   88ooood8 88'  `88 88'  `88 88'  `88 88'  `88 88'  `88 88'  `88 88'  `88 88ooood8 88'  `88    _.-/\ - /\-.''')
