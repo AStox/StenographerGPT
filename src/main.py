@@ -9,6 +9,12 @@ from audio_device_manager import switch_to_blackhole, switch_to_previous_device
 from utils import create_timestamped_directory
 
 class Stenographer(object):
+    menuItems = {
+        'RECORD': "Start New Recording",
+        'STOP': "Stop Recording",
+        'QUIT': "Quit",
+    }
+
     def __init__(self):
         self.current_archive_directory = None
         self.current_state = "idle"
@@ -42,6 +48,13 @@ class Stenographer(object):
         stdscr.addstr(y + 1, x + 1 + (box_width - len(text)) // 2, text)
         stdscr.attroff(curses.color_pair(text_color))
 
+    def findIndex(self, arr, item):
+        try:
+            index = arr.index(item)
+            return index
+        except ValueError:
+            return -1
+
     def menu(self, stdscr):
         # Set cursor to invisible
         curses.curs_set(0)
@@ -71,21 +84,34 @@ class Stenographer(object):
 
         # Menu logic
         option = 0
-        options = ["Start New Recording"]
+        options = []
 
         while True:
+            if self.current_state == "idle":
+                options = [self.menuItems['RECORD'], self.menuItems['QUIT']]
+            elif self.current_state == "recording":
+                options = [self.menuItems['STOP'], self.menuItems['QUIT']]
+            elif self.current_state == "transcribing":
+                options = [self.menuItems['QUIT']]
+            elif self.current_state == "summarizing":
+                options = [self.menuItems['QUIT']]
+            elif self.current_state == "error":
+                options = [self.menuItems['QUIT']]
+            else:
+                options = [self.menuItems['QUIT']]
+            stdscr.clear()
             title_window.clear()
             ASCII_line_length = 143
             offset = (curses.COLS - ASCII_line_length) // 2
-            title_window.addstr(0, offset,'''                                                                                                                 .~~~~.''')
-            title_window.addstr(1, offset,'''.d88888b    dP                                                                  dP                              {  _  _|''')
-            title_window.addstr(2, offset,'''88.    "'   88                                                                  88                              lv(◕ |◕)''')
-            title_window.addstr(3, offset,'''`Y88888b. d8888P .d8888b. 88d888b. .d8888b. .d8888b. 88d888b. .d8888b. 88d888b. 88d888b. .d8888b. 88d888b.       l  ‿‿ j''')
-            title_window.addstr(4, offset,'''      `8b   88   88ooood8 88'  `88 88'  `88 88'  `88 88'  `88 88'  `88 88'  `88 88'  `88 88ooood8 88'  `88    _.-/\ - /\-.''')
-            title_window.addstr(5, offset,'''d8'   .8P   88   88.  ... 88    88 88.  .88 88.  .88 88       88.  .88 88.  .88 88    88 88.  ... 88         r   \_\ /_/  l''')
-            title_window.addstr(6, offset,''' Y88888P    dP   `88888P' dP    dP `88888P' `8888P88 dP       `88888P8 88Y888P' dP    dP `88888P' dP         |  `---.--.`.--.''')
-            title_window.addstr(7, offset,'''                                                 .88                   88          .-. .-. -.-               `------`\__''__' .--.''')
-            title_window.addstr(8, offset,'''                                             d8888P                    dP          \_- |-'  |                         .------'^\  \ ''')
+            title_window.addstr(0, offset,'''                                                                                                                 .~~~~.              ''')
+            title_window.addstr(1, offset,'''.d88888b    dP                                                                  dP                              {  _  _|             ''')
+            title_window.addstr(2, offset,'''88.    "'   88                                                                  88                              lv(◕ |◕)             ''')
+            title_window.addstr(3, offset,'''`Y88888b. d8888P .d8888b. 88d888b. .d8888b. .d8888b. 88d888b. .d8888b. 88d888b. 88d888b. .d8888b. 88d888b.       l  ‿‿ j             ''')
+            title_window.addstr(4, offset,'''      `8b   88   88ooood8 88'  `88 88'  `88 88'  `88 88'  `88 88'  `88 88'  `88 88'  `88 88ooood8 88'  `88    _.-/\ - /\-.           ''')
+            title_window.addstr(5, offset,'''d8'   .8P   88   88.  ... 88    88 88.  .88 88.  .88 88       88.  .88 88.  .88 88    88 88.  ... 88         r   \_\ /_/  l          ''')
+            title_window.addstr(6, offset,''' Y88888P    dP   `88888P' dP    dP `88888P' `8888P88 dP       `88888P8 88Y888P' dP    dP `88888P' dP         |  `---.--.`.--.        ''')
+            title_window.addstr(7, offset,'''                                                 .88                   88          .-. .-. -.-               `------`\__''__' .--.   ''')
+            title_window.addstr(8, offset,'''                                             d8888P                    dP          \_- |-'  |                         .------'^\  \  ''')
             title_window.addstr(9, offset,'''                                                                                                                      \_______| |  | ''')
             title_window.addstr(10, offset,'  ')
 
@@ -101,10 +127,8 @@ class Stenographer(object):
             for i in range(len(options)):
                 if i == option:
                     self.draw_menu_item(stdscr, 15 + i * 4, 5, options[i], option == i)
-                    # stdscr.addstr(15 + i, 0, "> " + options[i])
                 else:
                     self.draw_menu_item(stdscr, 15 + i * 4, 5, options[i], option == i)
-                    # stdscr.addstr(15 + i, 0, "  " + options[i])
 
             key = stdscr.getch()
 
@@ -113,10 +137,12 @@ class Stenographer(object):
             elif key == curses.KEY_DOWN:
                 option = (option + 1) % len(options)
             elif key == curses.KEY_ENTER or key in [10, 13]:
-                if option == 0:
+                if option == self.findIndex(options, self.menuItems['RECORD']):
                     self.start_recording_wrapper()
-                elif option == 1:
+                elif option == self.findIndex(options, self.menuItems['STOP']):
                     self.stop_recording_wrapper()
+                elif option == self.findIndex(options, self.menuItems['QUIT']):
+                    break
             elif key == ord('q'):
                 break
             time.sleep(0.1)
