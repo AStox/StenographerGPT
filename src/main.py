@@ -18,6 +18,7 @@ class Stenographer(object):
     def __init__(self):
         self.current_archive_directory = None
         self.current_state = "idle"
+        self.output = ""
         curses.wrapper(self.menu)
 
     def get_center(self, window):
@@ -65,22 +66,46 @@ class Stenographer(object):
         # Initialize colours
         curses.start_color()
 
-
         # Colours
         curses.init_color(1, 0, 0, 0)  # BLACK
         curses.init_color(2, 0, 1000, 0)  # GREEN
+        curses.init_color(3, 1000, 0, 0)  # RED
 
-        curses.init_pair(1, 1, 2)
-        curses.init_pair(2, 2, 1)
+        curses.init_pair(1, 1, 2) # BLACK ON GREEN
+        curses.init_pair(2, 2, 1) # GREEN ON BLACK
+        curses.init_pair(3, 3, 1) # RED ON BLACK
 
         # Set screen attributes
         stdscr.bkgd(curses.color_pair(2))
         stdscr.attron(curses.color_pair(2))
 
         # Set Title window attributes
-        title_window = curses.newwin(11, curses.COLS, 0, 0)
+        title_window_height = 11
+        title_window_width = curses.COLS + 1
+        title_window = curses.newwin(title_window_height, title_window_width, 0, 0)
         title_window.bkgd(curses.color_pair(2))
         title_window.attron(curses.color_pair(2))
+
+        # Set Menu window attributes
+        self.menu_window_height = curses.LINES - title_window_height
+        self.menu_window_width = curses.COLS // 2
+        self.menu_window = curses.newwin(self.menu_window_height, self.menu_window_width, title_window_height, 0)
+        self.menu_window.bkgd(curses.color_pair(2))
+        self.menu_window.attron(curses.color_pair(2))
+
+        # Set Output window attributes
+        self.output_window_height = curses.LINES - title_window_height
+        self.output_window_width = curses.COLS // 2
+        self.output_window = curses.newwin(self.output_window_height,  self.output_window_width, title_window_height, self.menu_window_width + 1)
+        self.output_window.bkgd(curses.color_pair(2))
+        self.output_window.attron(curses.color_pair(2))
+
+        # Set Overlay window attributes
+        overlay_window_height = curses.LINES - title_window_height + 1
+        overlay_window_width = curses.COLS
+        overlay_window = curses.newwin(overlay_window_height, overlay_window_width, title_window_height - 1, 0)
+        overlay_window.bkgd(curses.color_pair(2))
+        overlay_window.attron(curses.color_pair(2))
 
         # Menu logic
         option = 0
@@ -99,30 +124,36 @@ class Stenographer(object):
                 options = [self.menuItems['QUIT']]
             else:
                 options = [self.menuItems['QUIT']]
+
             stdscr.clear()
+            stdscr.refresh()
+
             title_window.clear()
             ASCII_line_length = 143
             offset = (curses.COLS - ASCII_line_length) // 2
             title_window.addstr(0, offset,'''                                                                                                                 .~~~~.              ''')
             title_window.addstr(1, offset,'''.d88888b    dP                                                                  dP                              {  _  _|             ''')
-            title_window.addstr(2, offset,'''88.    "'   88                                                                  88                              lv(◕ |◕)             ''')
+            title_window.addstr(2, offset,'''88.    "'   88                                                                  88                              lv ◕ |◕)             ''')
             title_window.addstr(3, offset,'''`Y88888b. d8888P .d8888b. 88d888b. .d8888b. .d8888b. 88d888b. .d8888b. 88d888b. 88d888b. .d8888b. 88d888b.       l  ‿‿ j             ''')
             title_window.addstr(4, offset,'''      `8b   88   88ooood8 88'  `88 88'  `88 88'  `88 88'  `88 88'  `88 88'  `88 88'  `88 88ooood8 88'  `88    _.-/\ - /\-.           ''')
-            title_window.addstr(5, offset,'''d8'   .8P   88   88.  ... 88    88 88.  .88 88.  .88 88       88.  .88 88.  .88 88    88 88.  ... 88         r   \_\ /_/  l          ''')
+            title_window.addstr(5, offset,'''d8'   .8P   88   88.  ... 88    88 88.  .88 88.  .88 88       88.  .88 88.  .88 88    88 88.  ... 88         r   \_\ /_/  |          ''')
             title_window.addstr(6, offset,''' Y88888P    dP   `88888P' dP    dP `88888P' `8888P88 dP       `88888P8 88Y888P' dP    dP `88888P' dP         |  `---.--.`.--.        ''')
             title_window.addstr(7, offset,'''                                                 .88                   88          .-. .-. -.-               `------`\__''__' .--.   ''')
             title_window.addstr(8, offset,'''                                             d8888P                    dP          \_- |-'  |                         .------'^\  \  ''')
             title_window.addstr(9, offset,'''                                                                                                                      \_______| |  | ''')
-            title_window.addstr(10, offset,'  ')
 
-            stdscr.refresh()
             title_window.refresh()
 
-            separator = "━" * curses.COLS
+            overlay_window.clear()
+            separator = "━" * (curses.COLS // 2) + "┯" + "━" * (curses.COLS // 2)
+            overlay_window.addstr(0, 0, separator)
+            for i in range(1, self.menu_window_height + 1):
+                overlay_window.addstr(i, self.menu_window_width, "│")
+            overlay_window.refresh()
 
-            stdscr.addstr(10, 0, separator)
-            stdscr.addstr(11, 5, "Use arrow keys to navigate, Enter to select")
-            stdscr.addstr(13, 5, "Current state: " + self.current_state)
+            self.refresh_menu_window()
+
+            self.refresh_output_window()
 
             for i in range(len(options)):
                 if i == option:
@@ -147,15 +178,34 @@ class Stenographer(object):
                 break
             time.sleep(0.1)
 
+    def refresh_menu_window(self):
+        self.menu_window.clear()
+        self.menu_window.addstr(0, 5, "Use arrow keys to navigate, Enter to select")
+        self.menu_window.addstr(2, 5, "Current state: " + self.current_state)
+        self.menu_window.refresh()
+
+    def refresh_output_window(self):
+        self.output_window.clear()
+        if (self.current_state == "error"):
+            self.output_window.attron(curses.color_pair(3))
+            self.output_window.addstr(0, 5, "ERROR")
+            self.output_window.addstr(2, 5, self.output)
+            self.output_window.attroff(curses.color_pair(3))
+        else:
+            self.output_window.addstr(0, 5, "Output")
+            self.output_window.addstr(2, 5, self.output)
+            self.output_window.refresh()
+
     def start_recording_wrapper(self):
         try:
             self.current_state = "recording"
+            self.refresh_menu_window()
             switch_to_blackhole()
             self.current_archive_directory = create_timestamped_directory("archive")
             start_recording(self.current_archive_directory)
         except Exception as e:
-            print(e)
-            traceback.print_exc()
+            # output = str(e)
+            self.output = traceback.format_exc()
             self.current_state = "error"
 
     def stop_recording_wrapper(self):
@@ -173,25 +223,31 @@ class Stenographer(object):
             merge_audio_files(mic_output, system_output, merged_output)
 
             self.current_state = "transcribing"
+            self.refresh_menu_window()
             transcription = transcribe_audio(merged_output)
 
             transcript_file = os.path.join(output_directory, "transcript.txt")
             with open(transcript_file, "w") as f:
                 f.write(transcription)
+            print('Transcription:', transcription)
+            self.output = transcription
+            self.refresh_output_window()
 
-            self.current_state = "summarizing"
-            summary_file = os.path.join(output_directory, "summary.txt")
-            summary = summarize_text(transcription)
-            with open(summary_file, "w") as f:
-                f.write(summary)
-            print('Summary:', summary)
+            # self.current_state = "summarizing"
+            # self.refresh_menu_window()
+            # summary_file = os.path.join(output_directory, "summary.txt")
+            # summary = summarize_text(transcription)
+            # with open(summary_file, "w") as f:
+            #     f.write(summary)
+            # print('Summary:', summary)
 
             self.current_state = "idle"
+            self.refresh_menu_window()
 
         except Exception as e:
             self.current_state = "error"
-            print(f"An error occurred: {e}")
-            traceback.print_exc()
+            self.refresh_menu_window()
+            self.output = traceback.format_exc()
 
 if __name__ == "__main__":
     Stenographer()

@@ -67,7 +67,7 @@ def get_completion():
         'messages': messages
     }
     response = requests.post('https://api.openai.com/v1/chat/completions', headers=headers, json=data)
-    print(response.json())
+    # print(response.json())
     answer = response.json()['choices'][0]['message']['content'].strip()
     messages.append({"role": "assistant", "content": answer})
     return answer

@@ -40,7 +40,7 @@ def transcribe_audio(audio_file, chunk_duration=60):
                 data={'model': 'whisper-1'},
                 files={'file': ('temp_chunk.wav', audio_data, 'audio/wav')}
             )
-            print(response.json())
+            # print(response.json())
             transcription = response.json()['text']
             transcriptions.append(transcription)
 
@@ -82,7 +82,7 @@ def summarize_text(text):
         }
 
         response = requests.post('https://api.openai.com/v1/chat/completions', headers=headers, json=data)
-        print(response.json())
+        # print(response.json())
         summary = response.json()['choices'][0]['message']['content']
         summaries.append(summary)
 
@@ -112,26 +112,22 @@ def stop_recording(output_directory):
 def record_audio_non_blocking(outfile, device_index, channels):
     with sf.SoundFile(outfile, mode='w', samplerate=48000, channels=channels) as file:
         with sd.InputStream(callback=functools.partial(callback, file), channels=channels, samplerate=48000, device=device_index):
-            # print('Recording started.')
             stop_event.wait()
-            # print('Recording stopped.')
 
 def stop_audio_recording():
     global recording
     recording = False
 
 def callback(file, indata, frames, time, status):
-    if status:
-        print(status, file=sys.stderr)
     file.write(indata)
 
 def file_exists_and_not_empty(file_path):
     return os.path.exists(file_path) and os.path.getsize(file_path) > 0
 
-def print_audio_duration(file_path):
+def audio_duration(file_path):
     with sf.SoundFile(file_path) as audio_file:
         duration = len(audio_file) / audio_file.samplerate
-        print(f"{file_path} duration: {duration} seconds")
+    return duration
 
 
 
@@ -188,7 +184,6 @@ def find_device_index(device_label, direction):
 # print the available devices
 # devices = sd.query_devices()
 # for index, device in enumerate(devices):
-#     # print index name and max input channels and max output channels
 #     print(f"Device Index: {index}, Device Name: {device['name']}, Max Input Channels: {device['max_input_channels']}," +
 #           f" Max Output Channels: {device['max_output_channels']}")
 
@@ -211,7 +206,6 @@ def process_audio(input_directory, output_directory):
 
     # Transcribe the audio
     transcription = transcribe_audio(merged_output)
-    print(transcription);
     transcript_file = os.path.join(output_directory, "transcript.txt")
     with open(transcript_file, "w") as f:
         f.write(transcription)
@@ -222,14 +216,3 @@ def process_audio(input_directory, output_directory):
     summary = summarize_text(transcription)
     with open(summary_file, "w") as f:
         f.write(summary)
-    print('Summary:', summary)
-
-# stop_recording('archive/office')
-# output_directory = 'archive/office'
-# with open('archive/office/transcript.txt', 'r') as file:
-#     transcription_text = file.read()
-#     summary_file = os.path.join(output_directory, "summary.txt")
-#     summary = summarize_text(transcription_text)
-#     with open(summary_file, "w") as f:
-#         f.write(summary)
-#     print('Summary:', summary)
