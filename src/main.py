@@ -19,13 +19,13 @@ class Stenographer(object):
         self.current_archive_directory = None
         self.current_state = "idle"
         self.output = ""
-        self.output = '''
-Once upon a time, there was a small villag  e nestled at the foot of a great mountain range. The villagers lived simple lives, tending to their crops and livestock, and trading goods with travelers who passed through their town. But one day, a terrible dragon descended from the mountains and began to wreak havoc on the village. It burned their crops, destroyed their homes, and terrorized the people.
+        self.output = [f"Line {i+1}" for i in range(499)]
+        self.windows = ['menu' , 'output']
+        self.active_window = self.windows[0]
 
-The villagers were desperate to find a way to defeat the dragon and save their homes. They consulted with the wise old wizard who lived on the outskirts of the village, and he told them of a magical sword that was hidden in a nearby cave. According to legend, the sword had the power to slay any dragon, but it could only be wielded by a true hero.
+        # Initialize variables to manage scrolling
+        self.scroll_pos = 0
 
-A young man named Jack stepped forward and volunteered to retrieve the sword. He journeyed into the dark and dangerous cave, facing many perils along the way. But with determination and courage, he finally found the sword and returned to the village. With the sword in hand, Jack bravely faced the dragon and defeated it, saving the village from destruction. And from that day on, he was known as a hero throughout the land.
-'''
         curses.wrapper(self.menu)
 
     def get_center(self, window):
@@ -64,13 +64,10 @@ A young man named Jack stepped forward and volunteered to retrieve the sword. He
             return -1
 
     def menu(self, stdscr):
-        # Set cursor to invisible
+        curses.noecho()
+        curses.cbreak()
         curses.curs_set(0)
-
-        # Enable keypad mode
         stdscr.keypad(True)
-
-        # Initialize colours
         curses.start_color()
 
         # Colours
@@ -103,9 +100,11 @@ A young man named Jack stepped forward and volunteered to retrieve the sword. He
         # Set Output window attributes
         self.output_window_height = curses.LINES - title_window_height
         self.output_window_width = curses.COLS // 2
-        self.output_window = curses.newwin(self.output_window_height,  self.output_window_width - 5, title_window_height, self.menu_window_width + 5)
+        margin = 5
+        self.output_window = curses.newwin(self.output_window_height,  self.output_window_width - (margin * 2), title_window_height, self.menu_window_width + margin)
         self.output_window.bkgd(curses.color_pair(2))
         self.output_window.attron(curses.color_pair(2))
+        self.output_window.scrollok(True)
 
         # Set Overlay window attributes
         overlay_window_height = curses.LINES - title_window_height + 1
@@ -170,10 +169,20 @@ A young man named Jack stepped forward and volunteered to retrieve the sword. He
 
             key = stdscr.getch()
 
-            if key == curses.KEY_UP:
-                option = (option - 1) % len(options)
-            elif key == curses.KEY_DOWN:
-                option = (option + 1) % len(options)
+            if self.active_window == "menu":
+                if key == curses.KEY_UP:
+                    option = (option - 1) % len(options)
+                elif key == curses.KEY_DOWN:
+                    option = (option + 1) % len(options)
+            elif self.active_window == "output":
+                if key == curses.KEY_UP:
+                    self.scroll_pos = max(self.scroll_pos - 1, 0)
+                elif key == curses.KEY_DOWN:
+                    self.scroll_pos = min(self.scroll_pos + 1, len(self.output) - self.output_window_height)
+            if key == curses.KEY_RIGHT:
+                self.active_window = self.windows[self.windows.index(self.active_window) + 1 % len(self.windows)]
+            if key == curses.KEY_LEFT:
+                self.active_window = self.windows[self.windows.index(self.active_window) - 1 % len(self.windows)]
             elif key == curses.KEY_ENTER or key in [10, 13]:
                 if option == self.findIndex(options, self.menuItems['RECORD']):
                     self.start_recording_wrapper()
@@ -193,15 +202,20 @@ A young man named Jack stepped forward and volunteered to retrieve the sword. He
 
     def refresh_output_window(self):
         self.output_window.clear()
-        if (self.current_state == "error"):
-            self.output_window.attron(curses.color_pair(3))
-            self.output_window.addstr(0, 5, "ERROR")
-            self.output_window.addstr(2, 5, self.output)
-            self.output_window.attroff(curses.color_pair(3))
-        else:
-            self.output_window.addstr(0, 5, "Output")
-            self.output_window.addstr(2, 5, self.output)
-            self.output_window.refresh()
+        # # content = [f"Line {i+1}" for i in range(99)]
+        # if (self.current_state == "error"):
+        #     self.output_window.attron(curses.color_pair(3))
+        #     self.output_window.addstr(0, 5, "ERROR")
+        #     self.output_window.addstr(2, 5, self.output)
+        #     self.output_window.attroff(curses.color_pair(3))
+        # else:
+        self.output_window.addstr(0, 0, "Output:")
+        #     self.output_window.addstr(2, 5, self.output)
+        #     self.output_window.refresh()
+        for i in range(1,self.output_window_height):
+            if i + self.scroll_pos < len(self.output):
+                self.output_window.addstr(i, 0, self.output[i + self.scroll_pos])
+        self.output_window.refresh()
 
     def start_recording_wrapper(self):
         try:
@@ -238,13 +252,6 @@ A young man named Jack stepped forward and volunteered to retrieve the sword. He
                 f.write(transcription)
             print('Transcription:', transcription)
             self.output = transcription
-            self.output = '''
-                        Once upon a time, there was a small village nestled at the foot of a great mountain range. The villagers lived simple lives, tending to their crops and livestock, and trading goods with travelers who passed through their town. But one day, a terrible dragon descended from the mountains and began to wreak havoc on the village. It burned their crops, destroyed their homes, and terrorized the people.
-
-                        The villagers were desperate to find a way to defeat the dragon and save their homes. They consulted with the wise old wizard who lived on the outskirts of the village, and he told them of a magical sword that was hidden in a nearby cave. According to legend, the sword had the power to slay any dragon, but it could only be wielded by a true hero.
-
-                        A young man named Jack stepped forward and volunteered to retrieve the sword. He journeyed into the dark and dangerous cave, facing many perils along the way. But with determination and courage, he finally found the sword and returned to the village. With the sword in hand, Jack bravely faced the dragon and defeated it, saving the village from destruction. And from that day on, he was known as a hero throughout the land.
-                        '''
             self.refresh_output_window()
 
             # self.current_state = "summarizing"
