@@ -18,16 +18,16 @@ class Stenographer(object):
     def __init__(self):
         self.current_archive_directory = None
         self.current_state = "idle"
-        self.output = ""
-        self.output = ['''Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce vestibulum dapibus magna in vestibulum. Vestibulum eget metus enim. Suspendisse potenti. Curabitur commodo, nisl ac vulputate volutpat, metus arcu commodo urna, vel lacinia enim massa a tellus. Etiam eget lacus blandit, bibendum neque vitae, feugiat augue. Donec consequat, dolor sed venenatis sollicitudin, elit tellus dapibus velit, eu bibendum velit orci id enim. Duis elementum urna ac risus tincidunt commodo. Nulla facilisi. Integer semper libero et mauris blandit vehicula. Nam quis vestibulum risus. Nullam vitae commodo libero, eget faucibus massa. Suspendisse potenti. Suspendisse dictum enim at ipsum viverra, ac pellentesque dui dapibus.
+        self.output = ['1', '2', '3']
+#         self.output = ['''Lorem ipsum dolor sit amet, consectetur adipiscing elit. Fusce vestibulum dapibus magna in vestibulum. Vestibulum eget metus enim. Suspendisse potenti. Curabitur commodo, nisl ac vulputate volutpat, metus arcu commodo urna, vel lacinia enim massa a tellus. Etiam eget lacus blandit, bibendum neque vitae, feugiat augue. Donec consequat, dolor sed venenatis sollicitudin, elit tellus dapibus velit, eu bibendum velit orci id enim. Duis elementum urna ac risus tincidunt commodo. Nulla facilisi. Integer semper libero et mauris blandit vehicula. Nam quis vestibulum risus. Nullam vitae commodo libero, eget faucibus massa. Suspendisse potenti. Suspendisse dictum enim at ipsum viverra, ac pellentesque dui dapibus.
 
-Nunc sed purus risus. Praesent vel sapien eu lectus vehicula faucibus. Quisque gravida purus eu velit ultricies pharetra. Sed sodales libero a ante cursus, in laoreet lorem pharetra. Aenean imperdiet velit ac malesuada luctus. Nulla facilisi. Sed nec ipsum vel felis eleifend rhoncus sed nec elit. Nam vel massa lacus. Nunc id fringilla quam. Curabitur ac nibh elit. Ut interdum tellus a dolor bibendum aliquet. Nullam gravida ipsum id est lacinia maximus.
+# Nunc sed purus risus. Praesent vel sapien eu lectus vehicula faucibus. Quisque gravida purus eu velit ultricies pharetra. Sed sodales libero a ante cursus, in laoreet lorem pharetra. Aenean imperdiet velit ac malesuada luctus. Nulla facilisi. Sed nec ipsum vel felis eleifend rhoncus sed nec elit. Nam vel massa lacus. Nunc id fringilla quam. Curabitur ac nibh elit. Ut interdum tellus a dolor bibendum aliquet. Nullam gravida ipsum id est lacinia maximus.
 
-Donec vel augue tortor. Praesent non metus enim. Suspendisse potenti. Sed auctor, arcu vel posuere semper, purus nisi commodo risus, vel dignissim lectus sapien nec augue. Praesent imperdiet magna in velit feugiat, sed gravida nibh aliquam. Duis iaculis, justo a pellentesque lobortis, augue tortor consectetur lectus, vel aliquam est orci eu leo. Nulla facilisi. Fusce finibus auctor tellus, sed hendrerit sapien bibendum vel. Nunc pharetra elit id mi convallis bibendum. Curabitur tincidunt mi vel eros consequat, sit amet pulvinar ante luctus. Nullam euismod ipsum eget velit vehicula pulvinar.
+# Donec vel augue tortor. Praesent non metus enim. Suspendisse potenti. Sed auctor, arcu vel posuere semper, purus nisi commodo risus, vel dignissim lectus sapien nec augue. Praesent imperdiet magna in velit feugiat, sed gravida nibh aliquam. Duis iaculis, justo a pellentesque lobortis, augue tortor consectetur lectus, vel aliquam est orci eu leo. Nulla facilisi. Fusce finibus auctor tellus, sed hendrerit sapien bibendum vel. Nunc pharetra elit id mi convallis bibendum. Curabitur tincidunt mi vel eros consequat, sit amet pulvinar ante luctus. Nullam euismod ipsum eget velit vehicula pulvinar.
 
-Vestibulum lobortis, mauris eget sagittis sollicitudin, ex lacus elementum nibh, in sodales dolor purus nec odio. Mauris dignissim orci ac ante posuere, vitae sollicitudin justo elementum. Suspendisse bibendum malesuada tortor id molestie. Aenean eget orci a magna finibus auctor vel vitae ex. Curabitur malesuada orci eget leo lacinia, vel cursus lacus suscipit. Integer vel neque eget orci gravida ultricies eu eget elit. Phasellus consequat ligula ut lacinia pretium.
+# Vestibulum lobortis, mauris eget sagittis sollicitudin, ex lacus elementum nibh, in sodales dolor purus nec odio. Mauris dignissim orci ac ante posuere, vitae sollicitudin justo elementum. Suspendisse bibendum malesuada tortor id molestie. Aenean eget orci a magna finibus auctor vel vitae ex. Curabitur malesuada orci eget leo lacinia, vel cursus lacus suscipit. Integer vel neque eget orci gravida ultricies eu eget elit. Phasellus consequat ligula ut lacinia pretium.
 
-In bibendum vestibulum purus, vitae fringilla augue lacinia ut. Maecenas sed elit ullamcorper, pharetra dui vitae, varius velit. Fusce id imperdiet mi. Sed sed feugiat mauris, sit amet venenatis nulla. Nulla facilisi. Suspendisse ultricies felis eu fringilla efficitur. Aliquam erat volutpat. Curabitur accumsan, ipsum sed semper consequat, velit mi tristique nunc, non pretium nulla risus sed justo. Sed''']
+# In bibendum vestibulum purus, vitae fringilla augue lacinia ut. Maecenas sed elit ullamcorper, pharetra dui vitae, varius velit. Fusce id imperdiet mi. Sed sed feugiat mauris, sit amet venenatis nulla. Nulla facilisi. Suspendisse ultricies felis eu fringilla efficitur. Aliquam erat volutpat. Curabitur accumsan, ipsum sed semper consequat, velit mi tristique nunc, non pretium nulla risus sed justo. Sed''']
         self.windows = ['menu' , 'output']
         self.active_window = self.windows[0]
 
@@ -219,9 +219,9 @@ In bibendum vestibulum purus, vitae fringilla augue lacinia ut. Maecenas sed eli
             self.output_window.attroff(curses.color_pair(3))
         else:
             self.output_window.addstr(0, 0, "Output:")
-            for i in range(1,self.output_window_height):
+            for i in range(0,self.output_window_height):
                 if i + self.scroll_pos < len(self.output):
-                    self.output_window.addstr(i, 0, self.output[i + self.scroll_pos])
+                    self.output_window.addstr(i+1, 0, self.output[i + self.scroll_pos])
         self.output_window.refresh()
 
     def start_recording_wrapper(self):
